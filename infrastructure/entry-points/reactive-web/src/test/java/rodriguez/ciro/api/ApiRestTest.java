@@ -1,32 +1,84 @@
 package rodriguez.ciro.api;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
+import rodriguez.ciro.api.dto.RegistrarSolicitudRequest;
+import rodriguez.ciro.api.dto.UsuarioRequest;
+import rodriguez.ciro.model.solicitud.Solicitud;
+import rodriguez.ciro.model.usuario.Usuario;
+import rodriguez.ciro.usecase.registrarsolicitud.RegistrarSolicitudUseCase;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ContextConfiguration(classes = {SolicitudController.class})
 @WebFluxTest
 class ApiRestTest {
 
+    @MockBean
+    private RegistrarSolicitudUseCase registrarSolicitudUseCase;
+
     @Autowired
     private WebTestClient webTestClient;
 
     @Test
-    void testCommandName() {
-        webTestClient.get()
-                .uri("/api/usecase/path")
-                .accept(MediaType.APPLICATION_JSON)
+    void testRegistrarSolicitud() {
+        RegistrarSolicitudUseCase.SolicitudConUsuarioResult mockResult = 
+            new RegistrarSolicitudUseCase.SolicitudConUsuarioResult(
+                Solicitud.builder()
+                    .idSolicitud(1L)
+                    .monto(new BigDecimal("10000"))
+                    .plazo(12)
+                    .email("test@example.com")
+                    .idTipoPrestamo(1L)
+                    .idEstado(1L)
+                    .build(),
+                Usuario.builder()
+                    .idUsuario(1L)
+                    .nombres("Test")
+                    .apellidos("User")
+                    .correoElectronico("test@example.com")
+                    .build()
+            );
+
+        when(registrarSolicitudUseCase.registrarSolicitudConUsuario(any(Usuario.class), any(Solicitud.class)))
+            .thenReturn(Mono.just(mockResult));
+
+        RegistrarSolicitudRequest request = new RegistrarSolicitudRequest();
+        request.setMonto(new BigDecimal("10000"));
+        request.setPlazo(12);
+        request.setIdTipoPrestamo(1L);
+        
+        UsuarioRequest usuarioRequest = new UsuarioRequest();
+        usuarioRequest.setNombres("Test");
+        usuarioRequest.setApellidos("User");
+        usuarioRequest.setCorreoElectronico("test@example.com");
+        usuarioRequest.setTipoDocumento("CC");
+        usuarioRequest.setNumeroDocumento("123456789");
+        usuarioRequest.setFechaNacimiento(LocalDate.of(1990, 1, 1));
+        usuarioRequest.setDireccion("Test Address");
+        usuarioRequest.setTelefono("1234567890");
+        usuarioRequest.setSalarioBase(new BigDecimal("2000"));
+        usuarioRequest.setIdRol(1L);
+        
+        request.setUsuario(usuarioRequest);
+
+        webTestClient.post()
+                .uri("/api/v1/solicitud")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
                 .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
+                .expectStatus().isCreated()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON);
     }
 
 }

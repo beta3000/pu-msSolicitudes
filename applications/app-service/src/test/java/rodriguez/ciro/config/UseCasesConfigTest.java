@@ -5,7 +5,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import rodriguez.ciro.model.solicitud.gateways.SolicitudRepository;
+import rodriguez.ciro.model.tipoprestamo.gateways.TipoPrestamoRepository;
+import rodriguez.ciro.model.usuario.gateways.UsuarioGateway;
+import rodriguez.ciro.usecase.registrarsolicitud.RegistrarSolicitudUseCase;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class UseCasesConfigTest {
 
@@ -22,7 +29,11 @@ public class UseCasesConfigTest {
                 }
             }
 
-            assertTrue(useCaseBeanFound, "No beans ending with 'Use Case' were found");
+            assertTrue(useCaseBeanFound, "No beans ending with 'UseCase' were found");
+            
+            // Verify that the specific use case bean can be retrieved
+            RegistrarSolicitudUseCase useCase = context.getBean(RegistrarSolicitudUseCase.class);
+            assertNotNull(useCase, "RegistrarSolicitudUseCase bean should be available");
         }
     }
 
@@ -31,14 +42,18 @@ public class UseCasesConfigTest {
     static class TestConfig {
 
         @Bean
-        public MyUseCase myUseCase() {
-            return new MyUseCase();
+        public SolicitudRepository solicitudRepository() {
+            return mock(SolicitudRepository.class);
         }
-    }
 
-    static class MyUseCase {
-        public String execute() {
-            return "MyUseCase Test";
+        @Bean
+        public TipoPrestamoRepository tipoPrestamoRepository() {
+            return mock(TipoPrestamoRepository.class);
+        }
+
+        @Bean
+        public UsuarioGateway usuarioGateway() {
+            return mock(UsuarioGateway.class);
         }
     }
 }

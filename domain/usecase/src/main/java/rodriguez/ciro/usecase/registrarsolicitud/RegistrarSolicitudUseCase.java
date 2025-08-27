@@ -26,7 +26,7 @@ public class RegistrarSolicitudUseCase {
 
     public Mono<SolicitudConUsuarioResult> registrarSolicitudConUsuario(Usuario usuario, Solicitud solicitudConDatos) {
         return validarTipoPrestamo(solicitudConDatos.getIdTipoPrestamo())
-                .then(usuarioGateway.registrarUsuario(usuario))
+                .then(Mono.defer(() -> usuarioGateway.registrarUsuario(usuario)))
                 .doOnNext(usuarioRegistrado -> System.out.println("UseCase - Usuario registrado: idUsuario=" + usuarioRegistrado.getIdUsuario()))
                 .flatMap(usuarioRegistrado -> registrarSolicitudParaUsuario(solicitudConDatos, usuarioRegistrado)
                         .map(solicitud -> new SolicitudConUsuarioResult(solicitud, usuarioRegistrado)));
