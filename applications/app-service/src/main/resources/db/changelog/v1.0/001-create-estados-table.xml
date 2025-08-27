@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001" author="ciro.rodriguez">
+        <createTable tableName="estados">
+            <column name="id_estado" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="nombre" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="descripcion" type="VARCHAR(255)"/>
+        </createTable>
+
+        <insert tableName="estados">
+            <column name="id_estado" valueNumeric="1"/>
+            <column name="nombre" value="PENDIENTE_REVISION"/>
+            <column name="descripcion" value="El estado inicial, pendiente de revisión."/>
+        </insert>
+        <insert tableName="estados">
+            <column name="id_estado" valueNumeric="2"/>
+            <column name="nombre" value="APROBADO"/>
+            <column name="descripcion" value="El préstamo ha sido aprobado."/>
+        </insert>
+        <insert tableName="estados">
+            <column name="id_estado" valueNumeric="3"/>
+            <column name="nombre" value="RECHAZADO"/>
+            <column name="descripcion" value="El préstamo ha sido rechazado."/>
+        </insert>
+        <insert tableName="estados">
+            <column name="id_estado" valueNumeric="4"/>
+            <column name="nombre" value="DESEMBOLSADO"/>
+            <column name="descripcion" value="El préstamo ha sido desembolsado."/>
+        </insert>
+        <insert tableName="estados">
+            <column name="id_estado" valueNumeric="5"/>
+            <column name="nombre" value="CANCELADO"/>
+            <column name="descripcion" value="El préstamo ha sido cancelado."/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

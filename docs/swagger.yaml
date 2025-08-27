@@ -1,0 +1,130 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+  - url: http://localhost:8080
+    description: Generated server url
+tags:
+  - name: Usuarios
+    description: API para gestión de usuarios
+paths:
+  /api/v1/usuarios:
+    post:
+      tags:
+        - Usuarios
+      summary: Registrar un nuevo usuario
+      description: Registra un nuevo usuario en el sistema
+      operationId: registrarUsuario
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarUsuarioRequest'
+        required: true
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '400':
+          description: Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '409':
+          description: Correo electrónico ya registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+components:
+  schemas:
+    RegistrarUsuarioRequest:
+      type: object
+      properties:
+        nombres:
+          type: string
+          minLength: 1
+        apellidos:
+          type: string
+          minLength: 1
+        tipoDocumento:
+          type: string
+          minLength: 1
+        numeroDocumento:
+          type: string
+          minLength: 1
+        fechaNacimiento:
+          type: string
+          format: date
+        direccion:
+          type: string
+        telefono:
+          type: string
+        correoElectronico:
+          type: string
+          format: email
+          minLength: 1
+        salarioBase:
+          type: number
+          maximum: 15000000
+          minimum: 0
+        rol:
+          $ref: '#/components/schemas/RolDto'
+      required:
+        - apellidos
+        - correoElectronico
+        - nombres
+        - numeroDocumento
+        - rol
+        - salarioBase
+        - tipoDocumento
+    RolDto:
+      type: object
+      properties:
+        idRol:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        descripcion:
+          type: string
+      required:
+        - idRol
+    UsuarioResponse:
+      type: object
+      properties:
+        idUsuario:
+          type: integer
+          format: int64
+        nombres:
+          type: string
+        apellidos:
+          type: string
+        tipoDocumento:
+          type: string
+        numeroDocumento:
+          type: string
+        fechaNacimiento:
+          type: string
+          format: date
+        direccion:
+          type: string
+        telefono:
+          type: string
+        correoElectronico:
+          type: string
+        salarioBase:
+          type: number
+        rol:
+          $ref: '#/components/schemas/RolDto'

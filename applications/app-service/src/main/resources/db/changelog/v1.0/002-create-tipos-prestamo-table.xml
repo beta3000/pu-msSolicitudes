@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001" author="ciro.rodriguez">
+        <createTable tableName="tipos_prestamo">
+            <column name="id_tipo_prestamo" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="nombre" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="monto_minimo" type="DECIMAL(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="monto_maximo" type="DECIMAL(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tasa_interes" type="DECIMAL(5,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="validacion_automatica" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="tipos_prestamo">
+            <column name="id_tipo_prestamo" valueNumeric="1"/>
+            <column name="nombre" value="PERSONAL"/>
+            <column name="monto_minimo" valueNumeric="1000.00"/>
+            <column name="monto_maximo" valueNumeric="50000.00"/>
+            <column name="tasa_interes" valueNumeric="5.00"/>
+            <column name="validacion_automatica" valueBoolean="true"/>
+        </insert>
+        <insert tableName="tipos_prestamo">
+            <column name="id_tipo_prestamo" valueNumeric="2"/>
+            <column name="nombre" value="HIPOTECARIO"/>
+            <column name="monto_minimo" valueNumeric="5000.00"/>
+            <column name="monto_maximo" valueNumeric="200000.00"/>
+            <column name="tasa_interes" valueNumeric="3.50"/>
+            <column name="validacion_automatica" valueBoolean="false"/>
+        </insert>
+        <insert tableName="tipos_prestamo">
+            <column name="id_tipo_prestamo" valueNumeric="3"/>
+            <column name="nombre" value="VEHICULAR"/>
+            <column name="monto_minimo" valueNumeric="3000.00"/>
+            <column name="monto_maximo" valueNumeric="100000.00"/>
+            <column name="tasa_interes" valueNumeric="4.00"/>
+            <column name="validacion_automatica" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

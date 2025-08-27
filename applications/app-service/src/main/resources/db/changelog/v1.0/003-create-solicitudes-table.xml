@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001" author="ciro.rodriguez">
+        <createTable tableName="solicitudes">
+            <column name="id_solicitud" type="BIGSERIAL" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="monto" type="DECIMAL(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="plazo" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="id_estado" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="id_tipo_prestamo" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint constraintName="fk_solicitudes_estados"
+                                 baseTableName="solicitudes"
+                                 baseColumnNames="id_estado"
+                                 referencedTableName="estados"
+                                 referencedColumnNames="id_estado"
+                                 onDelete="RESTRICT"/>
+
+        <addForeignKeyConstraint constraintName="fk_solicitudes_tipos_prestamo"
+                                 baseTableName="solicitudes"
+                                 baseColumnNames="id_tipo_prestamo"
+                                 referencedTableName="tipos_prestamo"
+                                 referencedColumnNames="id_tipo_prestamo"
+                                 onDelete="RESTRICT"/>
+
+    </changeSet>
+
+</databaseChangeLog>
