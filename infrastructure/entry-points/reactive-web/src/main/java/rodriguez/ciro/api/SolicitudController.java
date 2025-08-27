@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import rodriguez.ciro.api.dto.RegistrarSolicitudRequest;
 import rodriguez.ciro.api.dto.SolicitudResponse;
@@ -32,16 +31,16 @@ public class SolicitudController {
     private final RegistrarSolicitudUseCase registrarSolicitudUseCase;
 
     @Operation(
-            summary = "Registrar una nueva solicitud de préstamo con usuario",
-            description = "Registra un nuevo usuario en el sistema externo y luego crea su solicitud de préstamo. Incluye toda la información del cliente (documento de identidad implícito en los datos) y los detalles del préstamo según la HU02."
+            summary = "Registrar una solicitud de préstamo",
+            description = "Registra una solicitud de préstamo validando automáticamente si el cliente ya existe por documento de identidad. Si existe, usa el cliente existente; si no existe, registra un nuevo cliente. Cumple con HU02: validación de información del cliente y detalles del préstamo."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Usuario y solicitud registrados exitosamente",
+            @ApiResponse(responseCode = "201", description = "Solicitud registrada exitosamente (cliente nuevo o existente)",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = SolicitudResponse.class))),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o tipo de préstamo no existe",
                     content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "409", description = "Error al registrar usuario (correo ya existe)",
+            @ApiResponse(responseCode = "409", description = "Error al registrar nuevo usuario (email ya existe con documento diferente)",
                     content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor",
                     content = @Content(mediaType = "application/json"))
@@ -49,24 +48,21 @@ public class SolicitudController {
     @PostMapping(path = "/v1/solicitud", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<SolicitudResponse> registrarSolicitud(
-            @Parameter(description = "Datos completos de la solicitud de préstamo incluyendo información del cliente", required = true)
+            @Parameter(description = "Datos completos de la solicitud de préstamo incluyendo información del cliente (se validará automáticamente si ya existe por documento)", required = true)
             @Valid @RequestBody RegistrarSolicitudRequest request) {
-        log.debug("Recibida solicitud de registro para email: {}", request.getUsuario().getCorreoElectronico());
+        log.debug("Recibida solicitud de registro para documento: {} - {}", 
+            request.getUsuario().getTipoDocumento(), request.getUsuario().getNumeroDocumento());
 
         return Mono.just(request)
                 .flatMap(req -> {
                     Usuario usuario = mapToUsuario(req);
                     Solicitud solicitud = mapToSolicitud(req);
-                    log.info("Enviando usuario y solicitud al use case");
+                    log.info("Validando cliente y registrando solicitud");
                     return registrarSolicitudUseCase.registrarSolicitudConUsuario(usuario, solicitud);
                 })
                 .map(result -> mapToResponse(result.getSolicitud(), result.getUsuario()))
-                .doOnSuccess(response -> log.info("Usuario y solicitud registrados exitosamente. Usuario ID: {}, Solicitud ID: {}",
-                    response.getUsuario().getIdUsuario(), response.getIdSolicitud()))
-                .onErrorMap(IllegalArgumentException.class, ex ->
-                    new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage()))
-                .onErrorMap(Exception.class, ex ->
-                    new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor"));
+                .doOnSuccess(response -> log.info("Solicitud registrada exitosamente. Cliente ID: {}, Solicitud ID: {}",
+                    response.getUsuario().getIdUsuario(), response.getIdSolicitud()));
     }
 
     private Usuario mapToUsuario(RegistrarSolicitudRequest request) {

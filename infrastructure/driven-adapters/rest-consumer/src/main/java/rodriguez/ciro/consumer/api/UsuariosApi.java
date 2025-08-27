@@ -33,4 +33,33 @@ public class UsuariosApi {
                 .retrieve()
                 .bodyToMono(UsuarioResponse.class);
     }
+
+    /**
+     * Build call for buscarUsuarioPorDocumento
+     *
+     * @param tipoDocumento (required)
+     * @param numeroDocumento (required)
+     * @return Mono<UsuarioResponse> response
+     */
+    public Mono<UsuarioResponse> buscarUsuarioPorDocumentoRequest(String tipoDocumento, String numeroDocumento) {
+        return client.method(HttpMethod.GET)
+                .uri("/api/v1/usuarios/documento/{tipoDocumento}/{numeroDocumento}", tipoDocumento, numeroDocumento)
+                .accept(MediaType.parseMediaType("application/json"))
+                .retrieve()
+                .bodyToMono(UsuarioResponse.class);
+    }
+
+    /**
+     * Build call for buscarUsuarioPorEmail
+     *
+     * @param correoElectronico (required)
+     * @return Mono<UsuarioResponse> response
+     */
+    public Mono<UsuarioResponse> buscarUsuarioPorEmailRequest(String correoElectronico) {
+        return client.method(HttpMethod.GET)
+                .uri("/api/v1/usuarios/email/{correoElectronico}", correoElectronico)
+                .accept(MediaType.parseMediaType("application/json"))
+                .retrieve()
+                .bodyToMono(UsuarioResponse.class);
+    }
 }

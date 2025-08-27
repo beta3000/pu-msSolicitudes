@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import rodriguez.ciro.model.exception.EmailEnUsoException;
 import rodriguez.ciro.model.solicitud.Solicitud;
 import rodriguez.ciro.model.solicitud.gateways.SolicitudRepository;
 import rodriguez.ciro.model.tipoprestamo.gateways.TipoPrestamoRepository;
@@ -108,8 +109,12 @@ class RegistrarSolicitudUseCaseTest {
 
     @Test
     void registrarSolicitudConUsuario_DeberiaRegistrarUsuarioYSolicitudExitosamente() {
-        // Given
+        // Given - Usuario no existe, se registra nuevo
         when(tipoPrestamoRepository.existePorId(1L)).thenReturn(Mono.just(true));
+        when(usuarioGateway.buscarUsuarioPorDocumento("CC", "12345678"))
+                .thenReturn(Mono.error(new RuntimeException("Usuario no encontrado")));
+        when(usuarioGateway.buscarUsuarioPorEmail("juan@example.com"))
+                .thenReturn(Mono.error(new RuntimeException("Usuario no encontrado")));
         when(usuarioGateway.registrarUsuario(usuario)).thenReturn(Mono.just(usuarioRegistrado));
         when(solicitudRepository.guardar(any(Solicitud.class))).thenReturn(Mono.just(solicitudGuardada));
 
@@ -122,6 +127,8 @@ class RegistrarSolicitudUseCaseTest {
                 .verifyComplete();
 
         verify(tipoPrestamoRepository).existePorId(1L);
+        verify(usuarioGateway).buscarUsuarioPorDocumento("CC", "12345678");
+        verify(usuarioGateway).buscarUsuarioPorEmail("juan@example.com");
         verify(usuarioGateway).registrarUsuario(usuario);
         verify(solicitudRepository).guardar(any(Solicitud.class));
     }
@@ -145,8 +152,12 @@ class RegistrarSolicitudUseCaseTest {
 
     @Test
     void registrarSolicitudConUsuario_DeberiaFallarCuandoRegistroUsuarioFalla() {
-        // Given
+        // Given - Usuario no existe y falla al registrarlo
         when(tipoPrestamoRepository.existePorId(1L)).thenReturn(Mono.just(true));
+        when(usuarioGateway.buscarUsuarioPorDocumento("CC", "12345678"))
+                .thenReturn(Mono.error(new RuntimeException("Usuario no encontrado")));
+        when(usuarioGateway.buscarUsuarioPorEmail("juan@example.com"))
+                .thenReturn(Mono.error(new RuntimeException("Usuario no encontrado")));
         when(usuarioGateway.registrarUsuario(usuario)).thenReturn(Mono.error(new RuntimeException("Error al registrar usuario")));
 
         // When & Then
@@ -157,7 +168,63 @@ class RegistrarSolicitudUseCaseTest {
                 .verify();
 
         verify(tipoPrestamoRepository).existePorId(1L);
+        verify(usuarioGateway).buscarUsuarioPorDocumento("CC", "12345678");
+        verify(usuarioGateway).buscarUsuarioPorEmail("juan@example.com");
         verify(usuarioGateway).registrarUsuario(usuario);
+        verify(solicitudRepository, never()).guardar(any());
+    }
+
+    @Test
+    void registrarSolicitudConUsuario_DeberiaUsarUsuarioExistenteCuandoYaExiste() {
+        // Given - Usuario ya existe
+        when(tipoPrestamoRepository.existePorId(1L)).thenReturn(Mono.just(true));
+        when(usuarioGateway.buscarUsuarioPorDocumento("CC", "12345678"))
+                .thenReturn(Mono.just(usuarioRegistrado));
+        when(solicitudRepository.guardar(any(Solicitud.class))).thenReturn(Mono.just(solicitudGuardada));
+
+        // When & Then
+        StepVerifier.create(registrarSolicitudUseCase.registrarSolicitudConUsuario(usuario, solicitud))
+                .expectNextMatches(result -> 
+                    result.getUsuario().getIdUsuario().equals(1L) &&
+                    result.getSolicitud().getIdSolicitud().equals(1L) &&
+                    result.getSolicitud().getEmail().equals("juan@example.com"))
+                .verifyComplete();
+
+        verify(tipoPrestamoRepository).existePorId(1L);
+        verify(usuarioGateway).buscarUsuarioPorDocumento("CC", "12345678");
+        verify(usuarioGateway, never()).registrarUsuario(any()); // No debe registrar porque ya existe
+        verify(solicitudRepository).guardar(any(Solicitud.class));
+    }
+
+
+    @Test
+    void registrarSolicitudConUsuario_DeberiaFallarCuandoEmailEstaEnUsoConDocumentoDiferente() {
+        // Given - Usuario no existe por documento, pero email está en uso con documento diferente
+        when(tipoPrestamoRepository.existePorId(1L)).thenReturn(Mono.just(true));
+        when(usuarioGateway.buscarUsuarioPorDocumento("CC", "12345678"))
+                .thenReturn(Mono.error(new RuntimeException("Usuario no encontrado")));
+        
+        // Usuario existente con mismo email pero documento diferente
+        Usuario usuarioExistente = usuarioRegistrado.toBuilder()
+                .correoElectronico("juan@example.com")
+                .tipoDocumento("CE")
+                .numeroDocumento("87654321")
+                .build();
+        
+        when(usuarioGateway.buscarUsuarioPorEmail("juan@example.com"))
+                .thenReturn(Mono.just(usuarioExistente));
+
+        // When & Then
+        StepVerifier.create(registrarSolicitudUseCase.registrarSolicitudConUsuario(usuario, solicitud))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof EmailEnUsoException &&
+                    throwable.getMessage().contains("El correo electrónico juan@example.com ya está registrado con un documento diferente"))
+                .verify();
+
+        verify(tipoPrestamoRepository).existePorId(1L);
+        verify(usuarioGateway).buscarUsuarioPorDocumento("CC", "12345678");
+        verify(usuarioGateway).buscarUsuarioPorEmail("juan@example.com");
+        verify(usuarioGateway, never()).registrarUsuario(any());
         verify(solicitudRepository, never()).guardar(any());
     }
 }

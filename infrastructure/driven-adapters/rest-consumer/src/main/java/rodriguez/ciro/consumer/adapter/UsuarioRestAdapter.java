@@ -36,6 +36,30 @@ public class UsuarioRestAdapter implements UsuarioGateway {
                 .doOnError(error -> log.error("Error al registrar usuario: {}", error.getMessage()));
     }
 
+    @Override
+    public Mono<Usuario> buscarUsuarioPorDocumento(String tipoDocumento, String numeroDocumento) {
+        log.debug("Buscando usuario por documento: {} - {}", tipoDocumento, numeroDocumento);
+
+        return usuariosApi.buscarUsuarioPorDocumentoRequest(tipoDocumento, numeroDocumento)
+                .doOnNext(response -> log.info("Usuario encontrado en servicio externo: idUsuario={}, nombres={}", 
+                    response.getIdUsuario(), response.getNombres()))
+                .map(this::mapToUsuario)
+                .doOnSuccess(u -> log.debug("Usuario encontrado con ID: {}", u.getIdUsuario()))
+                .doOnError(error -> log.error("Error al buscar usuario por documento: {}", error.getMessage()));
+    }
+
+    @Override
+    public Mono<Usuario> buscarUsuarioPorEmail(String correoElectronico) {
+        log.debug("Buscando usuario por email: {}", correoElectronico);
+
+        return usuariosApi.buscarUsuarioPorEmailRequest(correoElectronico)
+                .doOnNext(response -> log.info("Usuario encontrado por email en servicio externo: idUsuario={}, nombres={}", 
+                    response.getIdUsuario(), response.getNombres()))
+                .map(this::mapToUsuario)
+                .doOnSuccess(u -> log.debug("Usuario encontrado por email con ID: {}", u.getIdUsuario()))
+                .doOnError(error -> log.error("Error al buscar usuario por email: {}", error.getMessage()));
+    }
+
     private RegistrarUsuarioRequest mapToRegistrarUsuarioRequest(Usuario usuario) {
         RegistrarUsuarioRequest request = new RegistrarUsuarioRequest();
         request.setNombres(usuario.getNombres());
